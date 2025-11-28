@@ -1,10 +1,11 @@
 // CloudFlare Pages专用配置文件
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { cloudflare } from "@cloudflare/vite-plugin";
 
 // 导出适用于CloudFlare Pages的Vite配置
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), cloudflare()],
   // 移除开发环境代理，使用CloudFlare Pages Functions或其他后端服务
   // 前端将直接调用外部API
   build: {

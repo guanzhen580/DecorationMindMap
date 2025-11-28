@@ -1,10 +1,14 @@
 # 装修思维导图项目 - CloudFlare部署指南
 
-## 项目结构概览
+## CloudFlare部署指南
 
-这是一个全栈应用项目，包含以下主要部分：
-- **前端**：使用React + Vite构建的单页应用
-- **后端**：使用Express + MySQL构建的API服务
+本指南提供将装饰装修思维导图应用部署到CloudFlare Pages和Workers平台的详细步骤。
+
+### 项目结构概览
+
+- **前端**: React + Vite (使用CloudFlare Pages部署)
+- **后端**: Express + MySQL (需要部署到支持Node.js的环境)
+- **API代理**: CloudFlare Worker (用于处理API请求转发和跨域问题)
 
 ## 部署方案
 
@@ -27,6 +31,25 @@
    - **构建命令**：`npm run build:cloudflare`
    - **构建输出目录**：`dist`
    - **环境变量**（可选）：根据需要配置环境变量
+
+### API代理部署 (CloudFlare Worker)
+
+1. **Worker配置文件**
+   - 项目已包含`wrangler.toml`配置文件，设置了正确的Worker名称和兼容性日期
+   - 主要配置项:
+     - `name = "decorationmindmap"`: Worker名称
+     - `compatibility_date = "2025-11-28"`: 兼容性日期
+     - `BACKEND_API_URL`: 后端API地址环境变量
+
+2. **部署Worker**
+   - 安装Wrangler CLI: `npm install -g wrangler`
+   - 登录CloudFlare: `wrangler login`
+   - 部署Worker: `wrangler deploy`
+   - 或者通过CloudFlare仪表板部署
+
+3. **配置环境变量**
+   - 在部署后，需要在CloudFlare仪表板中设置`BACKEND_API_URL`环境变量
+   - 指向您实际部署的后端API地址
 
 #### 配置步骤
 
@@ -58,13 +81,14 @@
 
 由于项目使用MySQL数据库和Express后端，有以下几种部署方案：
 
-#### 选项1：使用CloudFlare Workers (推荐)
+#### 选项1：使用CloudFlare Workers + Pages Functions (推荐)
 
-1. **创建CloudFlare Worker**：
-   - 在CloudFlare控制面板中，选择 "Workers & Pages" -> "Workers"
-   - 创建新的Worker
+1. **使用已配置的Worker作为API代理**：
+   - 已设置好的Worker将处理API请求转发和跨域问题
+   - 后端API可部署到任何支持Node.js的环境
+   - 通过环境变量`BACKEND_API_URL`配置后端地址
 
-2. **将Express后端转换为Worker**：
+2. **将Express后端转换为Worker**（可选）：
    - 使用 `wrangler` 工具初始化项目
    - 重构Express代码以适配Worker环境
    - 使用CloudFlare D1或其他支持的数据库替代MySQL
@@ -112,10 +136,18 @@
    - 在CloudFlare中设置自定义域名
    - 配置SSL证书
 
-2. **CORS设置**：
-   - 确保后端允许来自CloudFlare Pages域名的跨域请求
+2. **API地址配置**：
+   - 前端API客户端会自动根据环境判断API地址
+   - 确保Worker的`BACKEND_API_URL`环境变量指向正确的后端地址
 
-3. **性能优化**：
+3. **更新Worker配置**
+   - 如需修改Worker配置，更新`wrangler.toml`文件
+   - 重新部署Worker: `wrangler deploy`
+
+4. **CORS设置**：
+   - 已配置Worker自动处理CORS问题，添加必要的响应头
+
+5. **性能优化**：
    - 启用CloudFlare缓存
    - 配置图片优化
 
@@ -136,6 +168,10 @@
 4. **监控与日志**：
    - 设置日志收集和监控
    - 配置错误告警
+
+5. **Worker配置**
+   - 确保Worker名称与wrangler.toml中配置的一致
+   - 保持compatibility_date为最新值以获得最佳性能
 
 ## 故障排除
 
