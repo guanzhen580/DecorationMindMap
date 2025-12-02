@@ -414,7 +414,7 @@ export default function App() {
           Name from API is: {name}
         </button>
         <p>
-          Edit <code>worker/index.ts</code> to change the name
+          Edit <code>./start.js</code> to change the name
         </p>
       </div>
     </div>
