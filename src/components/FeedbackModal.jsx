@@ -51,7 +51,7 @@ const FeedbackModal = ({ visible, onClose }) => {
       open={visible}
       onCancel={onClose}
       footer={null} // 自定义页脚
-      destroyOnClose={true}
+      destroyOnHidden={true}
       maskClosable={false}
     >
       <Form

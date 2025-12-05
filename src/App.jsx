@@ -3,16 +3,15 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, useNavigate, Navigate, useParams } from 'react-router-dom';
 
 import { Outlet } from 'react-router-dom';
-
 import { Swiper, SwiperSlide } from 'swiper/react'
-import 'swiper/css'
+import Papa from 'papaparse';
+import './App.css';'swiper/css'
 import 'swiper/css/pagination'
 import { Modal } from 'antd';
 import { marked } from 'marked';
 
 // 导入App.css样式文件
 import './App.css';
-
 
 // 从UserContext导入useUser
 import { useUser } from './context/UserContext';
@@ -23,7 +22,7 @@ import MindMap_SimpleMindMap from './MindMap_SimpleMindMap';
 import { FaFileAlt, FaUsers, FaProjectDiagram, FaCommentDots } from 'react-icons/fa';
 import Sidebar from './components/Sidebar';
 import UserWelcome from './components/UserWelcome';
-import LoginBySupabase from './components/Login_supabase';
+import LoginBySupabaseUsername from './components/loginByUserName_supabase';
 import DocsViewer from './components/DocsViewer';
 import MindMapControls from './components/MindMapControls';
 import FeedbackModal from './components/FeedbackModal';
@@ -32,7 +31,41 @@ import CommunityPage from './components/Community/CommunityPage';
 import PostDetailPage from './components/Community/PostDetailPage';
 import { sampleData } from './utils/sampleData';
 
-const PORT = 3000;
+const PORT = 5000;
+// CSV文件路径（基于public目录）
+const csvFilePath = '/backend_data/nodes_details_data.csv';
+// 浏览器端解析CSV文件的函数（使用Papa Parse库）
+const parseCSV = () => {
+  return fetch(csvFilePath)
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response.text();
+    })
+    .then(csvText => {
+      // 使用Papa Parse解析CSV文本
+      return new Promise((resolve, reject) => {
+        Papa.parse(csvText, {
+          header: true, // 使用第一行作为表头
+          skipEmptyLines: true, // 跳过空行
+          complete: (results) => {
+            // 转换数值类型的字段
+            const formattedResults = results.data.map(item => ({
+              ...item,
+              id: parseInt(item.id),
+              node_id: parseInt(item.node_id),
+              parent_id: item.parent_id ? parseInt(item.parent_id) : null,
+              create_user_id: parseInt(item.create_user_id),
+              parent_mindMap_id: parseInt(item.parent_mindMap_id)
+            }));
+            resolve(formattedResults);
+          },
+          error: (error) => {
+            reject(error);
+          }
+        });
+      });
+    });
+};
 
 // 返回主界面的思维导图及节点弹窗
 function MainAppUI() {
@@ -82,10 +115,12 @@ function MainAppUI() {
       try {
         if (viewType === 'simplemindmap') {
           try {
-            const response = await fetch(`http://localhost:${PORT}/api/nodes`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            setMindData(buildMindMapStructure(await response.json()));
-          } catch (error) {
+              // const response = await fetch(`http://localhost:${PORT}/api/nodes`);
+              const nodesData = await parseCSV();
+              // console.log('CSV data:', nodesData);
+              //if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+              setMindData(buildMindMapStructure(nodesData));
+            } catch (error) {
             console.error('Server data failed (simplemindmap), using sample:', error);
             setMindData(sampleData);
           }
@@ -287,29 +322,6 @@ export default function App() {
   const handleOpenFeedbackModal = () => setFeedbackModalVisible(true);
   const handleCloseFeedbackModal = () => setFeedbackModalVisible(false);
 
-  const [name, setName] = useState("unknown");
-/**
-   * 调用API函数
-   * 在GitHub Pages环境中会优雅降级为使用模拟数据
-   */
-  const callApi = async () => {
-    try {
-      // 尝试调用API - 在GitHub Pages环境下这将失败
-      const response = await fetch("./api/"); // 使用相对路径
-      if (response.ok) {
-        const data = await response.json();
-        setName(data.name);
-      } else {
-        // API调用失败，使用模拟数据
-        console.log("API调用失败，使用模拟数据");
-        setName("模拟API数据 - GitHub Pages环境");
-      }
-    } catch (error) {
-      // 捕获网络错误，使用模拟数据
-      console.log("网络错误，使用模拟数据:", error);
-      setName("模拟API数据 - GitHub Pages环境");
-    }
-  };
   const navigationItems = [
     {
       id: 'document',
@@ -389,23 +401,12 @@ export default function App() {
         footer={null}
         onCancel={() => setLoginVisible(false)}
         maskClosable={false}
-        destroyOnClose={true}
+        destroyOnHidden={true}
       >
         {/* <Login onSuccess={handleLoginSuccess} /> */}
-        <LoginBySupabase onSuccess={handleLoginSuccess} />
+        <LoginBySupabaseUsername onSuccess={handleLoginSuccess} />
       </Modal>
       <FeedbackModal visible={feedbackModalVisible} onClose={handleCloseFeedbackModal} />
-      {/* <div className="card">
-        <button
-          onClick={callApi}
-          aria-label="get name"
-        >
-          Name from API is: {name}
-        </button>
-        <p>
-          Edit <code>./start.js</code> to change the name
-        </p>
-      </div> */}
     </div>
   );
 }
@@ -460,124 +461,6 @@ function MainAppUIWrapperForDocs() {
   );
 }
 
-// function buildMindTreeStructure(flatData) {
-// // 从数据库的扁平数据结构转换为前端需要的树形结构
-// // 输入：平面数据，包含节点ID、名称、详情、图片和父节点ID
-// // 输出：树形数据，每个节点包含：
-// // label: 字符串类型，默认为空。节点的标签文本。
-// // direction: 数字类型，默认为0。节点方向，1表示向右，0表示无偏移，-1表示向左。
-// // isRoot: 布尔类型，默认为false。指示该节点是否为根节点。
-// // children: 字符串数组，默认为空数组。子节点的ID列表。
-// // isExpand: 布尔类型，默认为true。节点初始展开状态。
-//   const nodeMap = new Map();
-//   let root = null;
-//   if (!Array.isArray(flatData) || flatData.length === 0) {
-//     // 如果 flatData 不是预期的数组格式，记录错误并使用 sampleData 的 children 部分作为 Plan B
-//     console.error('buildMindTreeStructure: 无效的平面数据格式，尝试使用 sampleData.children');
-//     if (sampleData && Array.isArray(sampleData.children)) {
-//         // 这是一个简化的转换，可能需要根据mindmap-tree的具体需求调整
-//         // 这里仅做了一个非常基础的映射，实际可能需要更复杂的逻辑
-//         const treeResult = {};
-//         let nodeIdCounter = 1000; // 避免与 sampleData 中可能存在的 id 冲突
-//         const convertSampleToTree = (nodes, parentId) => {
-//             nodes.forEach(sNode => {
-//                 const currentId = (nodeIdCounter++).toString();
-//                 treeResult[currentId] = {
-//                     label: sNode.name,
-//                     direction: 1,
-//                     isRoot: !parentId,
-//                     children: [],
-//                     isExpand: true,
-//                     // details: sNode.details // mindmap-tree 可能不直接使用此结构
-//                 };
-//                 if(parentId && treeResult[parentId]){
-//                     treeResult[parentId].children.push(currentId);
-//                 }
-//                 if(sNode.children && sNode.children.length > 0){
-//                     convertSampleToTree(sNode.children, currentId);
-//                 }
-//                 if(!parentId && !root) root = treeResult[currentId]; // 设置根节点
-//             });
-//         }
-//         convertSampleToTree(sampleData.children, null);
-//         return treeResult;
-//     } else {
-//         console.error('buildMindTreeStructure: sampleData.children 也无效，返回空对象');
-//         return {}; // 返回空对象或一个基础的根节点
-//     }
-//   }
-
-//   flatData.forEach(item => {
-//     if (!nodeMap.has(item.node_id)) {
-//       nodeMap.set(item.node_id.toString(), { // Ensure node_id is string for consistency
-//         label: item.name || '',
-//         direction: 1, 
-//         isRoot: false,
-//         children: [], 
-//         isExpand: true,
-//         details: item.details ? [{ text: item.details, image: item.image }] : [],
-//         parent_id: item.parent_id ? item.parent_id.toString() : null, // Ensure parent_id is string or null
-//         node_id: item.node_id.toString(),
-//       });
-//     } else {
-//       if (item.details) {
-//         // Ensure details is an array and item.details is valid before pushing
-//         let existingNode = nodeMap.get(item.node_id.toString());
-//         if (!Array.isArray(existingNode.details)) existingNode.details = [];
-//         existingNode.details.push({ text: item.details, image: item.image });
-//       }
-//     }
-//   });
-
-//   // 2. 组装父子关系
-//   nodeMap.forEach((node, id) => {
-//     if (node.parent_id === null || node.parent_id === undefined) {
-//       node.isRoot = true;
-//       if (!root) root = node; // Set the first root found
-//     } else if (nodeMap.has(node.parent_id)) {
-//       const parent = nodeMap.get(node.parent_id);
-//       if (parent && Array.isArray(parent.children)) { // Ensure parent and children array exist
-//            parent.children.push(id);
-//       }
-//     } else {
-//         // If parent_id exists but parent node is not in map, consider this node a root (or orphaned)
-//         console.warn(`Node ${id} has parent_id ${node.parent_id} but parent not found. Marking as root.`);
-//         node.isRoot = true;
-//         if(!root) root = node; // If no root was set yet
-//     }
-//   });
-
-//   // If no root was identified (e.g., circular dependencies or all nodes have parents not in the list),
-//   // try to find a node without a listed parent or just pick the first one.
-//   if (!root && nodeMap.size > 0) {
-//       for (const node of nodeMap.values()) {
-//           if (!node.parent_id || !nodeMap.has(node.parent_id)) {
-//               node.isRoot = true;
-//               root = node;
-//               break;
-//           }
-//       }
-//       if (!root) { // Fallback: pick the first node as root
-//         root = nodeMap.values().next().value;
-//         if(root) root.isRoot = true;
-//       }
-//   }
-
-//   const result = {};
-//   nodeMap.forEach((value, key) => {
-//     // 只保留需要的字段
-//     result[key] = {
-//       children: value.children,
-//       label: value.label,
-//       direction: value.direction,
-//       isRoot: value.isRoot,
-//       isExpand: value.isExpand
-//       // 你可以按需添加其他字段
-//     };
-//   });
-//   return result;
-// }
-
 function buildMindMapStructure(flatData) {
   const nodeMap = new Map();
   let root = null;
@@ -586,7 +469,7 @@ function buildMindMapStructure(flatData) {
     console.error('无效的平面数据格式');
     return sampleData;
   }
-  console.log("buildMindMapStructure() flatData:", flatData);
+  // console.log("buildMindMapStructure() flatData:", flatData);
   // 创建基础节点结构
   flatData.forEach(item => {
     if (!nodeMap.has(item.node_id)) {
@@ -618,7 +501,6 @@ function buildMindMapStructure(flatData) {
       root = nodeMap.get(item.node_id);
     }
   });
-  console.log("buildMindMapStructure() nodeMap:", nodeMap);
   const nodeMapCp = nodeMap;
   // 遍历节点，将具有父子关系的节点关联，构建父子关系
   nodeMapCp.forEach(item => {
@@ -646,4 +528,3 @@ function buildMindMapStructure(flatData) {
     attachment_name: root.attachment_name
   } : sampleData;
 }
-

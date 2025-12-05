@@ -1,10 +1,14 @@
+/**
+ * 原型试验用的登录组件
+ * 向后端发送用户名与密码进行验证和注册
+ */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Input, Button, Form, Checkbox, message, Spin } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useUser } from '../context/UserContext';
 
-const PORT = 3000;
+const PORT = 5000;
 
 
 export default function Login({ onSuccess }) {
