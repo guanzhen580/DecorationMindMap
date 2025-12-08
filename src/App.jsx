@@ -5,8 +5,9 @@ import { Routes, Route, useNavigate, Navigate, useParams } from 'react-router-do
 import { Outlet } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react'
 import Papa from 'papaparse';
-import './App.css';'swiper/css'
-import 'swiper/css/pagination'
+import './App.css';
+import 'swiper/css';
+import 'swiper/css/pagination';
 import { Modal } from 'antd';
 import { marked } from 'marked';
 
@@ -34,14 +35,27 @@ import { sampleData } from './utils/sampleData';
 const PORT = 5000;
 // CSV文件路径（基于public目录）
 const csvFilePath = '/backend_data/nodes_details_data.csv';
+const imageFilePath = '/backend_data/images/';
 // 浏览器端解析CSV文件的函数（使用Papa Parse库）
 const parseCSV = () => {
   return fetch(csvFilePath)
     .then(response => {
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      return response.text();
+      if (!response.ok) throw new Error(`Fetch file ${csvFilePath} error! status: ${response.status}`);
+      return response.arrayBuffer(); // 获取原始二进制数据
     })
-    .then(csvText => {
+    .then(arrayBuffer => {
+      // 尝试使用GBK编码解码CSV文件（Windows系统常见编码）
+      let csvText;
+      try {
+        const decoder = new TextDecoder('gbk');
+        csvText = decoder.decode(arrayBuffer);
+      } catch (error) {
+        // 如果GBK解码失败，回退到UTF-8编码
+        console.log('GBK解码失败，尝试使用UTF-8编码:', error);
+        const decoder = new TextDecoder('utf-8');
+        csvText = decoder.decode(arrayBuffer);
+      }
+      
       // 使用Papa Parse解析CSV文本
       return new Promise((resolve, reject) => {
         Papa.parse(csvText, {
@@ -74,6 +88,8 @@ function MainAppUI() {
   const [mindData, setMindData] = useState(null);          // 思维导图的数据
   const [loading, setLoading] = useState(true);            // 是否正在加载中，初始为true
   const [viewType, setViewType] = useState('simplemindmap'); // 导图的显示类型，默认simplemindmap
+  const [fullscreenImageVisible, setFullscreenImageVisible] = useState(false); // 全屏图片查看器是否可见
+  const [currentImageIndex, setCurrentImageIndex] = useState(0); // 当前查看的图片索引
   const mindMapInstanceRef = useRef(null);                   // 缓存思维导图实例
   const navigate = useNavigate(); // React Router's navigate hook
 
@@ -169,6 +185,45 @@ function MainAppUI() {
 
   return (
     <div className="app-layout">
+      {/* 全屏图片查看器 */}
+      {fullscreenImageVisible && selectedNode && selectedNode.img_url && (
+        <div className="fullscreen-image-viewer" onClick={() => setFullscreenImageVisible(false)}>
+          <div className="fullscreen-image-container">
+            {/* 关闭按钮 */}
+            <button className="fullscreen-close-btn" onClick={(e) => {
+              e.stopPropagation();
+              setFullscreenImageVisible(false);
+            }}>×</button>
+            
+            {/* 左右切换按钮 */}
+            {currentImageIndex > 0 && (
+              <button className="fullscreen-nav-btn prev-btn" onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex(prev => prev - 1);
+              }}>‹</button>
+            )}
+            
+            {currentImageIndex < selectedNode.img_url.length - 1 && (
+              <button className="fullscreen-nav-btn next-btn" onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImageIndex(prev => prev + 1);
+              }}>›</button>
+            )}
+            
+            {/* 图片 */}
+            <img
+              src={imageFilePath + (selectedNode.img_url[currentImageIndex] || '/error0.png')}
+              className="fullscreen-image"
+              alt={`全屏查看图片${currentImageIndex + 1}`}
+            />
+            
+            {/* 图片计数 */}
+            <div className="image-counter">
+              {currentImageIndex + 1} / {selectedNode.img_url.length}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={`mainMap`}>
         <div className="view-header">
@@ -201,18 +256,22 @@ function MainAppUI() {
                               item && typeof item === 'string' && (
                                 <SwiperSlide key={i}>
                                   <img
-                                    src={item || '/resources/style1.png'}
-                                    className="carousel-image"
-                                    alt={`知识点配图${i + 1}`}
-                                    onError={(e) => {
-                                      e.target.onerror = null; // 防止循环错误
-                                      e.target.style.display = 'none';
-                                      // 可以在这里添加一个占位符图片或文本
-                                      const placeholderText = document.createElement('p');
-                                      placeholderText.textContent = '图片加载失败';
-                                      if (e.target.parentNode) e.target.parentNode.appendChild(placeholderText);
-                                    }}
-                                  />
+                                        src={imageFilePath + (item || '/error0.png')}
+                                        className="carousel-image"
+                                        alt={`知识点配图${i + 1}`}
+                                        onClick={() => {
+                                          setCurrentImageIndex(i);
+                                          setFullscreenImageVisible(true);
+                                        }}
+                                        onError={(e) => {
+                                          e.target.onerror = null; // 防止循环错误
+                                          e.target.style.display = 'none';
+                                          // 可以在这里添加一个占位符图片或文本
+                                          const placeholderText = document.createElement('p');
+                                          placeholderText.textContent = '图片加载失败';
+                                          if (e.target.parentNode) e.target.parentNode.appendChild(placeholderText);
+                                        }}
+                                      />
                                 </SwiperSlide>
                               )
                             ))}
@@ -381,7 +440,7 @@ export default function App() {
             />) : (
             <WelcomePage showLogin={showLoginModal} />
           )} >
-          {/* 子Route，登录后显示的主要应用UI */}
+          {/* Layout的子Route，登录后显示的主要应用UI */}
           <Route path="/" element={<MainAppUI isAuthenticated={isAuthenticated} isPremium={isPremium}
             logout={logout} showLogin={showLoginModal} />} />
           <Route path="/forum" element={<CommunityPage />} />
