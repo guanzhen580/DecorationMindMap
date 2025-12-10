@@ -23,7 +23,7 @@ import MindMap_SimpleMindMap from './MindMap_SimpleMindMap';
 import { FaFileAlt, FaUsers, FaProjectDiagram, FaCommentDots } from 'react-icons/fa';
 import Sidebar from './components/Sidebar';
 import UserWelcome from './components/UserWelcome';
-import LoginBySupabaseUsername from './components/LoginByUserName_supabase';
+// import LoginBySupabaseUsername from './components/LoginByUserName_supabase';
 import DocsViewer from './components/DocsViewer';
 import MindMapControls from './components/MindMapControls';
 import FeedbackModal from './components/FeedbackModal';
