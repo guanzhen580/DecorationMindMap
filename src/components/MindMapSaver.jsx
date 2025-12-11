@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Button, Modal, Form, Input, message, Upload, Alert } from 'antd';
 import { 
   EditOutlined, 
@@ -9,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { useUser } from '../context/UserContext';
 
-const MindMapControls = ({ data, onDataChange, selectedNode, mindMapInstance }) => {
+const MindMapSaver= ({ mindMapInstance }) => {
   const { isPremium, saveUserData } = useUser();
 
   // 保存编辑后的思维导图
@@ -53,4 +52,4 @@ const MindMapControls = ({ data, onDataChange, selectedNode, mindMapInstance }) 
   );
 };
 
-export default MindMapControls; 
+export default MindMapSaver; 

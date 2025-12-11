@@ -25,7 +25,7 @@ import Sidebar from './components/Sidebar';
 import UserWelcome from './components/UserWelcome';
 // import LoginBySupabaseUsername from './components/LoginByUserName_supabase';
 import DocsViewer from './components/DocsViewer';
-import MindMapControls from './components/MindMapControls';
+import MindMapSaver from './components/MindMapSaver';
 import FeedbackModal from './components/FeedbackModal';
 // Import community pages with corrected casing
 import CommunityPage from './components/Community/CommunityPage';
@@ -230,7 +230,7 @@ function MainAppUI() {
         <div className="view-header">
           <h2>装修流程思维导图</h2>
           {viewType === 'simplemindmap' && mindData && !loading && (
-            <MindMapControls mindMapInstance={mindMapInstanceRef.current} />
+            <MindMapSaver mindMapInstance={mindMapInstanceRef.current} />
           )}
         </div>
         <div className={`mindmap-wrapper mindWrapper-size`}>
