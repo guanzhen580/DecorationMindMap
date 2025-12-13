@@ -312,7 +312,7 @@ body {
   margin-top: 0;
   margin-bottom: 20px;
   color: #2c3e50;
-  font-size: 1.8rem;
+  font-size: 1.3rem;
   text-align: left;
   padding-bottom: 10px;
   border-bottom: 1px solid #eee;
@@ -464,20 +464,6 @@ body {
     width: 100%;
   }
 
-  /* 调整布局为垂直堆叠 */
-  .split-layout {
-    flex-direction: column;
-  }
-  
-  /* 文本内容区域调整 */
-  .text-content {
-    border-left: none;
-    border-top: 1px solid #eee;
-    padding-left: 0;
-    padding-top: 15px;
-    margin-top: 15px;
-  }
-  
   /* 视图头部调整 */
   .view-header {
     flex-direction: column;
@@ -491,6 +477,97 @@ body {
     width: 100%;
     overflow-x: auto;
     padding: 5px 0;
+  }
+  
+  /* 移动端弹窗样式调整 - 类似小红书详情页 */
+  .detail-panel {
+    top: 45%;
+    left: 48%;
+    width: 95%;
+    height: 92vh;
+    padding: 15px;
+    padding-top: 30px; /* 为固定的关闭按钮留出空间 */
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .detail-panel h1 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+  }
+  
+  .detail-panel h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+  }
+  
+  /* 关闭按钮固定在顶部 */
+  .detail-panel .close-btn {
+    position: fixed;
+    top: 5px;
+    right: 0px;
+    z-index: 1001;
+    background: rgba(255, 255, 255, 0.9);
+    /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); */
+  }
+  
+  /* 弹窗标题 */
+  .detail-panel h3 {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    text-align: left;
+  }
+  
+  /* 内容滚动区域 - 允许整体滚动 */
+  .detail-panel .content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: calc(100% - 40px); /* 减去标题高度 */
+    padding-right: 5px;
+  }
+  
+  /* 垂直堆叠布局 */
+  .detail-panel .split-layout {
+    flex-direction: column;
+    gap: 1px;
+    height: auto; /* 允许内容自然增长 */
+  }
+  
+  /* 图片轮播区域 */
+  .detail-panel .image-carousel {
+    flex: none;
+    width: 100%;
+    max-height: 60vh;
+    margin-bottom: 10px;
+  }
+  
+  /* 轮播图片自适应 */
+  .detail-panel .carousel-image {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  
+  /* 文本内容区域 - 不单独滚动 */
+  .detail-panel .text-content {
+    flex: none;
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #eee;
+    padding-left: 0;
+    padding-top: 15px;
+    margin-top: 10px;
+    overflow-y: visible;
+  }
+  
+  /* 知识点内容样式 */
+  .detail-panel .point {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    color: #333;
   }
 }
 

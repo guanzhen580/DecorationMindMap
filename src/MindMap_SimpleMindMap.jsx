@@ -95,39 +95,6 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
       if (onMindMapLoad) {
         onMindMapLoad(mindMap);
       }
-
-      // mindMap.on('drag', (e) => {
-      //   console.log('mindMap.on("drag"):');
-      // })
-      mindMap.on('mousedown', (e) => {
-        console.log('mindMap.on("mousedown"):', e);
-      })
-      // mindMap.on('mousewheel', (e) => {
-      //   console.log('mindMap.on("mousewheel"):');
-      // })
-
-      // // 创建命名的事件处理函数，以便正确移除事件监听器
-      // const handleWindowTouchStart = (e) => {
-      //   console.log('window.addEventListener("touchstart"):', e);
-      // };
-      // const handleWindowTouchMove = (e) => {
-      //   console.log('window.addEventListener("touchmove"):', e);
-      // };
-      // const handleWindowTouchEnd = (e) => {
-      //   console.log('window.addEventListener("touchend"):', e);
-      // };
-
-      // // 存储事件处理函数引用
-      // touchEventHandlersRef.current = {
-      //   handleWindowTouchStart,
-      //   handleWindowTouchMove,
-      //   handleWindowTouchEnd
-      // };
-
-      // // 同时在window上添加触摸事件监听，确保能接收到信号
-      // window.addEventListener('touchstart', handleWindowTouchStart);
-      // window.addEventListener('touchmove', handleWindowTouchMove);
-      // window.addEventListener('touchend', handleWindowTouchEnd);
       
       // 在画布容器上添加触摸事件监听器，并将触摸事件转换为鼠标事件
       // 这样simple-mind-map库就能识别和处理移动设备上的拖拽操作
