@@ -148,18 +148,23 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
             touch2.clientX - touch1.clientX,
             touch2.clientY - touch1.clientY
           );
+          // console.log('currentDistance:', currentDistance, ', lastDistance:', lastDistance);
           
           if (lastDistance) {
             // 计算缩放比例，转换为鼠标滚轮事件的delta值
-            const scale = currentDistance / lastDistance;
-            const deltaY = scale > 1 ? -100 : 100; // 放大时deltaY为负，缩小时为正
+            let scale = currentDistance / lastDistance;
+            let deltaY = scale > 1 ? -scale+1 : 1-scale; // 放大时deltaY为负，缩小时为正
             
+            // console.log('scale:', scale, ', deltaY:', deltaY);
             // 获取双指中心点作为缩放中心
             const centerX = (touch1.clientX + touch2.clientX) / 2;
             const centerY = (touch1.clientY + touch2.clientY) / 2;
             
             // 创建并触发鼠标滚轮事件
             const wheelEvent = new WheelEvent('wheel', {
+              isTrusted: true,
+              composed:true,
+              ctrlKey: true,
               deltaY: deltaY,
               clientX: centerX,
               clientY: centerY,
@@ -167,7 +172,6 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
               cancelable: true
             });
             touch1.target.dispatchEvent(wheelEvent);
-            
             lastDistance = currentDistance;
           }
         }
@@ -177,9 +181,7 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
         e.preventDefault();
         
         // 重置双指触摸距离
-        if (e.touches.length < 2) {
-          lastDistance = null;
-        }
+        lastDistance = null;
         
         // 处理单指触摸结束，触发mouseup和click事件
         if (e.changedTouches.length === 1 && e.touches.length === 0) {
@@ -217,6 +219,10 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
         handleCanvasTouchMove,
         handleCanvasTouchEnd
       };
+
+      // mindMap.on('mousewheel', (e) => {
+      //   console.log('mindMap.on(\'mousewheel\'):', e);
+      // })
 
       mindMap.on('node_click', (node, e) => {
         if (node === null) return;
