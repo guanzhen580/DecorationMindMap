@@ -96,9 +96,12 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
         onMindMapLoad(mindMap);
       }
       
-      // 存储双指触摸距离，用于计算缩放比例
-      let lastDistance = null;
-      let lastDeltaY = null;
+      // 存储触摸事件状态
+      const touchState = {
+        lastDistance: null,
+        isPanning: false,
+        initialScale: 1
+      };
       
       // 在画布容器上添加触摸事件监听器，并将触摸事件转换为鼠标事件
       // 这样simple-mind-map库就能识别和处理移动设备上的拖拽和缩放操作
@@ -115,15 +118,23 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
             cancelable: true
           });
           touch.target.dispatchEvent(mouseEvent);
+          touchState.isPanning = true;
         }
-        // 处理双指触摸，记录初始距离
+        // 处理双指触摸，记录初始距离和缩放状态
         else if (e.touches.length === 2) {
           const touch1 = e.touches[0];
           const touch2 = e.touches[1];
-          lastDistance = Math.hypot(
+          
+          // 记录初始双指距离
+          touchState.lastDistance = Math.hypot(
             touch2.clientX - touch1.clientX,
             touch2.clientY - touch1.clientY
           );
+          
+          // 记录初始缩放比例（不需要实际获取，因为我们通过模拟鼠标滚轮实现缩放）
+          touchState.initialScale = 1;
+          
+          touchState.isPanning = false;
         }
       };
       
@@ -131,7 +142,7 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
         e.preventDefault();
         
         // 处理单指触摸，转换为mousemove事件
-        if (e.touches.length === 1) {
+        if (e.touches.length === 1 && touchState.isPanning) {
           const touch = e.touches[0];
           const mouseEvent = new MouseEvent('mousemove', {
             clientX: touch.clientX,
@@ -145,21 +156,24 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
         else if (e.touches.length === 2) {
           const touch1 = e.touches[0];
           const touch2 = e.touches[1];
+          
+          // 计算当前双指距离
           const currentDistance = Math.hypot(
             touch2.clientX - touch1.clientX,
             touch2.clientY - touch1.clientY
           );
-          // console.log('currentDistance:', currentDistance, ', lastDistance:', lastDistance);
           
-          if (lastDistance) {
-            // 计算缩放比例，转换为鼠标滚轮事件的delta值
-            let scale = currentDistance / lastDistance;
-            let deltaY = scale > 1 ? -scale+1 : 1-scale; // 放大时deltaY为负，缩小时为正
-            // 限制缩放比例，防止过快缩放
-            if (Math.abs(deltaY - lastDeltaY) > 0.2) {
-              deltaY = (deltaY - lastDeltaY)>0 ? 0.2 + deltaY : -0.2 + deltaY;
-            }
-            // console.log('scale:', scale, ', deltaY:', deltaY);
+          if (touchState.lastDistance) {
+            // 计算缩放比例变化
+            const scaleRatio = currentDistance / touchState.lastDistance;
+            
+            // 计算deltaY值（基于缩放比例变化，确保缩放速度合理）
+            // 放大时deltaY为负，缩小时为正
+            let deltaY = (1 - scaleRatio) * 50;
+            
+            // 限制deltaY的绝对值，防止缩放过快
+            deltaY = Math.max(-20, Math.min(20, deltaY));
+            
             // 获取双指中心点作为缩放中心
             const centerX = (touch1.clientX + touch2.clientX) / 2;
             const centerY = (touch1.clientY + touch2.clientY) / 2;
@@ -167,7 +181,7 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
             // 创建并触发鼠标滚轮事件
             const wheelEvent = new WheelEvent('wheel', {
               isTrusted: true,
-              composed:true,
+              composed: true,
               ctrlKey: true,
               deltaY: deltaY,
               clientX: centerX,
@@ -175,18 +189,25 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
               bubbles: true,
               cancelable: true
             });
-            touch1.target.dispatchEvent(wheelEvent);
-            lastDistance = currentDistance;
-            lastDeltaY = deltaY;
+            
+            // 使用canvasElement作为目标，确保事件能被正确处理
+            const canvasElement = containerRef.current;
+            if (canvasElement) {
+              canvasElement.dispatchEvent(wheelEvent);
+            }
+            
+            // 更新lastDistance
+            touchState.lastDistance = currentDistance;
           }
         }
       };
+
       
       const handleCanvasTouchEnd = (e) => {
         e.preventDefault();
         
         // 重置双指触摸距离
-        lastDistance = null;
+        touchState.lastDistance = null;
         
         // 处理单指触摸结束，触发mouseup和click事件
         if (e.changedTouches.length === 1 && e.touches.length === 0) {
@@ -210,6 +231,9 @@ const MindMap_SimpleMindMap = ({ data, onNodeClick, onMindMapLoad }) => {
           });
           touch.target.dispatchEvent(clickEvent);
         }
+        
+        // 重置触摸状态
+        touchState.isPanning = false;
       };
       
       // 在画布容器上添加触摸事件监听器
