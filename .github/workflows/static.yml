@@ -40,6 +40,10 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
+        env:
+          # 从 Secrets 读取并注入构建环境
+          VITE_PUBLIC_SUPABASE_URL: ${{ secrets.VITE_PUBLIC_SUPABASE_URL }}
+          VITE_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.VITE_PUBLIC_SUPABASE_ANON_KEY }}
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
