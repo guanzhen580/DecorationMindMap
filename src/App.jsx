@@ -91,6 +91,7 @@ function MainAppUI() {
   const [viewType] = useState('simplemindmap'); // 导图的显示类型，默认simplemindmap
   const [fullscreenImageVisible, setFullscreenImageVisible] = useState(false); // 全屏图片查看器是否可见
   const [currentImageIndex, setCurrentImageIndex] = useState(0); // 当前查看的图片索引
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false); // 支付二维码弹窗是否可见
   const mindMapInstanceRef = useRef(null);                   // 缓存思维导图实例
 
   const { isAuthenticated, isPremium, upgradeToPremium } = useUser();
@@ -234,6 +235,31 @@ function MainAppUI() {
           </div>
         </div>
       )}
+      
+      {/* 支付二维码弹窗 */}
+      <Modal
+        title="扫码支付"
+        open={paymentModalVisible}
+        onCancel={() => setPaymentModalVisible(false)}
+        footer={null}
+        width={360}
+        centered
+        zIndex={2000}
+      >
+        <div className="payment-modal-content">
+          <p className="payment-description">请使用微信或支付宝扫描下方二维码支付</p>
+          <div className="qr-code-container">
+            {/* 这里使用示例二维码，实际项目中应替换为真实支付二维码 */}
+            <img
+              src="https://via.placeholder.com/200x200?text=支付二维码"
+              alt="支付二维码"
+              className="qr-code"
+            />
+          </div>
+          <p className="payment-amount">支付金额：¥9.00</p>
+          <p className="payment-note">支付成功后，系统将自动为您开通文章阅读权限</p>
+        </div>
+      </Modal>
 
       <div className={`mainMap`}>
         <div className="view-header">
@@ -302,10 +328,15 @@ function MainAppUI() {
                                       <div className="premium-locked">
                                         <p>该内容为VIP专属，仅对VIP用户开放全部内容</p>
                                         {isAuthenticated ? (
-                                          // 已登录用户，显示升级按钮
-                                          <button className="upgrade-btn" onClick={upgradeToPremium}>
-                                            立即升级为VIP
-                                          </button>
+                                          // 已登录用户，显示升级按钮和支付按钮
+                                          <div className="premium-actions">
+                                            <button className="upgrade-btn" onClick={upgradeToPremium}>
+                                              立即升级为VIP
+                                            </button>
+                                            <button className="pay-btn" onClick={() => setPaymentModalVisible(true)}>
+                                              立即支付阅读
+                                            </button>
+                                          </div>
                                         ) : (
                                           // 未登录用户，提示登录
                                           <p>请先登录后查看更多内容</p>
