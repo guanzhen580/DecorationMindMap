@@ -93,7 +93,14 @@ function MainAppUI() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0); // 当前查看的图片索引
   const mindMapInstanceRef = useRef(null);                   // 缓存思维导图实例
 
-  const { isAuthenticated } = useUser();
+  const { isAuthenticated, isPremium, upgradeToPremium } = useUser();
+
+  // 截断文本函数，用于付费内容的部分显示
+  const truncateText = (text, maxLength = 200) => {
+    if (!text || text.length <= maxLength) return text;
+    // 截断文本并添加省略号
+    return text.substring(0, maxLength) + '...';
+  };
 
   // 设置思维导图实例缓存的回调函数，传给MindMap_SimpleMindMap子组件，让它创建好实例后把实例缓存起来
   const memoizedOnMindMapLoad = useCallback((instance) => {
@@ -111,7 +118,10 @@ function MainAppUI() {
       details = nodeData.data?.note ? [{ text: nodeData.data.note }] : [{ text: '暂无详细信息。' }];
     }
     let img_url = nodeData.img_url || nodeData.data?.img_url || [];
-    setSelectedNode({ name: nodeName, details, img_url: img_url });
+    // 添加节点的付费状态
+    const is_premium = nodeData.is_premium || nodeData.data?.is_premium || false;
+    console.log("is_premium: ", is_premium);
+    setSelectedNode({ name: nodeName, details, img_url: img_url, is_premium });
     setPanelVisible(true);
     if (clickDetails && clickDetails.type === 'attachment_icon_click') {
       console.log('MainAppUI: Attachment icon click received:', clickDetails.attachment);
@@ -284,10 +294,29 @@ function MainAppUI() {
                                 <div
                                   key={idx}
                                   className="point"
-                                  dangerouslySetInnerHTML={{
-                                    __html: marked.parse(item.text)
-                                  }}
-                                />
+                                >
+                                  {selectedNode.is_premium && !isPremium ? (
+                                    // 付费节点且非VIP用户，只显示部分内容
+                                    <>
+                                      <div dangerouslySetInnerHTML={{ __html: marked.parse(truncateText(item.text)) }} />
+                                      <div className="premium-locked">
+                                        <p>该内容为VIP专属，仅对VIP用户开放全部内容</p>
+                                        {isAuthenticated ? (
+                                          // 已登录用户，显示升级按钮
+                                          <button className="upgrade-btn" onClick={upgradeToPremium}>
+                                            立即升级为VIP
+                                          </button>
+                                        ) : (
+                                          // 未登录用户，提示登录
+                                          <p>请先登录后查看更多内容</p>
+                                        )}
+                                      </div>
+                                    </>
+                                  ) : (
+                                    // 免费节点或VIP用户，显示全部内容
+                                    <div dangerouslySetInnerHTML={{ __html: marked.parse(item.text) }} />
+                                  )}
+                                </div>
                               )
                             ))}
                           </div>
@@ -556,7 +585,8 @@ function buildMindMapStructure(flatData) {
         attachment_name: item.attachment_name,
         children: [],
         parent_id: item.parent_id,
-        node_id: item.node_id
+        node_id: item.node_id,
+        is_premium: item.is_premium
       });
     } else {
       // 这里是防止原始数据里有重复的node_id，若有，则合并详情和图片列表
@@ -587,7 +617,8 @@ function buildMindMapStructure(flatData) {
         attachment_url: item.attachment_url,
         attachment_name: item.attachment_name,
         children: item.children,
-        node_id: item.node_id
+        node_id: item.node_id,
+        is_premium: item.is_premium
       });
     }
   });

@@ -133,6 +133,8 @@ export const convertObjectToMindMap = (obj) => {
                 // 添加可下载标记和下载链接（示例）
                 attachmentUrl: node.attachment_url,
                 attachmentName: node.attachment_name,
+                // 添加付费状态
+                is_premium: node.is_premium || false,
                 // 解析图片URL
                 // 将字符串格式的数组解析为真正的数组
                 img_url: Array.isArray(node.img_url) ? node.img_url : (node.img_url ? JSON.parse(node.img_url.replace(/'/g, '"')) : [])
