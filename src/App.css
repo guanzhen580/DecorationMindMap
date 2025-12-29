@@ -299,7 +299,7 @@ body {
   padding: 25px;
   border-radius: 15px;
   box-shadow: 0 5px 25px rgba(0,0,0,0.15);
-  z-index: 1000;
+  z-index: 1500;
   max-width: 1050px;
   width: 80%;
   height: 80vh;
@@ -325,7 +325,7 @@ body {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: 1001;
   display: flex;
   justify-content: center;
   align-items: center;
