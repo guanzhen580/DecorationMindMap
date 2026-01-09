@@ -365,12 +365,12 @@ body {
 /* 分割布局 */
 .split-layout {
   display: flex;
-  gap: 30px;
+  /*gap: 30px;*/
   height: 100%;
 }
 
 .image-carousel {
-  flex: 1.5;
+  flex: 1.2;
   min-width: 0;
   display: flex;
   justify-content: center;

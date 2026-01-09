@@ -167,7 +167,6 @@ const logoutButtonHoverStyle = {
 
 export default function LoginBySupabaseUsername({ onSuccess }) {
   // 认证状态管理
-  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
 
@@ -176,44 +175,15 @@ export default function LoginBySupabaseUsername({ onSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
-  const { login, logout } = useUser(); // 从UserContext获取login和logout方法
+  const { logout } = useUser(); // 从UserContext获取logout方法
 
   /**
-   * 初始化时检查用户会话状态
-   * 监听认证状态变化
+   * 初始化时不再需要本地监听认证状态
+   * 因为UserContext已经全局管理了认证状态
    */
   useEffect(() => {
-    // 查询supabase中是否存在现有会话
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      // 如果有会话，更新UserContext
-      if (session) {
-        const usernameFromMetadata = session.user.user_metadata?.username || session.user.email.split('@')[0];
-        console.log("用户元数据获取:", session.user);
-        login({
-          token: session.access_token,
-          username: usernameFromMetadata,
-          isPremium: session.user?.user_metadata?.is_premium || false
-        });
-      }
-    });
-
-    // 监听认证状态变化
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      // 如果会话变化，更新UserContext
-      if (session) {
-        const usernameFromMetadata = session.user.user_metadata?.username || session.user.email.split('@')[0];
-        login({
-          token: session.access_token,
-          username: usernameFromMetadata,
-          isPremium: session.user?.user_metadata?.is_premium || false
-        });
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [login, logout]);
+    // 移除本地认证状态监听，统一由UserContext管理
+  }, [logout]);
 
   /**
    * 处理用户注册
@@ -280,17 +250,17 @@ export default function LoginBySupabaseUsername({ onSuccess }) {
       if (error) {
         throw error;
       }
-
+      // 测试VIP取消的代码
+      //const { datas, errors } = await supabase.auth.updateUser({
+      //        data: { 
+      //          is_premium: false,
+      //          premium_expires_at: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString() // 默认为1天有效期
+      //        }
+      //      });
       // 登录成功，调用成功回调
       if (data.session) {
-        console.log("login success data: ", data);
-        // 从用户元数据中获取用户名
-        const usernameFromMetadata = data.session.user.user_metadata?.username || data.session.user.email.split('@')[0];
-        login({
-          token: data.session.access_token,
-          username: usernameFromMetadata,
-          isPremium: data.session.user?.user_metadata?.is_premium || false // 从用户元数据获取VIP状态
-        });
+        console.log("登录成功:", data);
+        // UserContext会自动通过onAuthStateChange监听登录状态
         onSuccess?.(data.user);
         message.success('登录成功');
       }

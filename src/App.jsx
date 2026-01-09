@@ -92,10 +92,9 @@ function MainAppUI() {
   const [viewType] = useState('simplemindmap'); // 导图的显示类型，默认simplemindmap
   const [fullscreenImageVisible, setFullscreenImageVisible] = useState(false); // 全屏图片查看器是否可见
   const [currentImageIndex, setCurrentImageIndex] = useState(0); // 当前查看的图片索引
-  const [paymentModalVisible, setPaymentModalVisible] = useState(false); // 支付二维码弹窗是否可见
   const mindMapInstanceRef = useRef(null);                   // 缓存思维导图实例
 
-  const { isAuthenticated, isPremium, upgradeToPremium, completeUpgradeToPremium } = useUser();
+  const { isAuthenticated, isPremium, upgradeToPremium, completeUpgradeToPremium, paymentModalVisible, setPaymentModalVisible } = useUser();
 
   // 截断文本函数，用于付费内容的部分显示
   const truncateText = (text, maxLength = 200) => {
@@ -110,20 +109,7 @@ function MainAppUI() {
     mindMapInstanceRef.current = instance;
   }, []);
 
-  // 监听来自Sidebar的支付弹窗事件
-  useEffect(() => {
-    const handleShowPaymentModal = () => {
-      setPaymentModalVisible(true);
-    };
-
-    // 添加事件监听器
-    window.addEventListener('showPaymentModal', handleShowPaymentModal);
-
-    // 清理事件监听器
-    return () => {
-      window.removeEventListener('showPaymentModal', handleShowPaymentModal);
-    };
-  }, []);
+  // 移除自定义事件监听器，改用UserContext管理支付模态框状态
 
   // 处理节点点击事件的回调函数，传给MindMap_SimpleMindMap子组件，让它点击节点时调用
   // 主要是拿到点击节点的数据，然后弹出详情页
